@@ -1,5 +1,29 @@
 #!/usr/bin/env bash
 
+# Define directories
+LOG_DIR="./logs"
+RESULTS_DIR="./results"
+TMP_DIR="./tmp"
+
+# Create directories if they don't exist
+mkdir -p "$LOG_DIR" "$RESULTS_DIR" "$TMP_DIR"
+
+# File paths
+LOGFILE="${LOG_DIR}/scan.log"
+CURL_ERR_LOG="${LOG_DIR}/curl_err.log"
+OUTPUT_JSON="${RESULTS_DIR}/results.json"
+OUTPUT_CSV="${RESULTS_DIR}/results.csv"
+JSON_TMP="${TMP_DIR}/results.tmp.jsonl"
+
+# Default settings
+SCHEME="${SCHEME:-http}"
+CONCURRENCY="${CONCURRENCY:-20}"
+SAFE_MODE="${SAFE_MODE:-true}"
+DRY_RUN="${DRY_RUN:-false}"
+RETRIES="${RETRIES:-1}"
+BACKOFF="${BACKOFF:-1}"
+USE_DNS_PROBE="${USE_DNS_PROBE:-false}"
+
 show_help() {
   cat <<'EOF'
 ┌──────────────────────────────────────────────┐
@@ -54,18 +78,6 @@ Notes:
 EOF
 }
 
-# Default settings
-SCHEME="${SCHEME:-http}"
-CONCURRENCY="${CONCURRENCY:-20}"
-SAFE_MODE="${SAFE_MODE:-true}"
-DRY_RUN="${DRY_RUN:-false}"
-RETRIES="${RETRIES:-1}"
-BACKOFF="${BACKOFF:-1}"
-USE_DNS_PROBE="${USE_DNS_PROBE:-false}"
-LOGFILE="scan.log"
-JSON_TMP="results.tmp.jsonl"
-OUTPUT_JSON="${OUTPUT_JSON:-results.json}"
-OUTPUT_CSV="${OUTPUT_CSV:-results.csv}"
 
 # Initialisierung der Variablen
 RUN_SQLI=false
@@ -88,6 +100,7 @@ while [[ $# -gt 0 ]]; do
     --redirect) RUN_REDIRECT=true ;;
     --idor) RUN_IDOR=true ;;
     --verbose) VERBOSE=true ;;
+    --dry-run) DRY_RUN=true ;;
     --all)  RUN_ALL=true;;
     --help|-h) show_help; exit 0 ;;
     *) echo "[!] Unknown option: $1"; exit 1 ;;
@@ -131,4 +144,3 @@ if [[ ! "$DOMAIN" =~ ^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
   echo "[!] Invalid domain: $DOMAIN"
   exit 1
 fi
-
