@@ -66,3 +66,10 @@ fi
 log "[*] CSV results written to $OUTPUT_CSV"
 log "[*] Scan complete. Log: $LOGFILE"
 
+if [ -f "$CURL_ERR_LOG" ] && [ ! -s "$CURL_ERR_LOG" ]; then
+  rm "$CURL_ERR_LOG"
+fi
+
+if [ -f "$JSON_TMP" ]; then
+  rm "$JSON_TMP"
+fi
