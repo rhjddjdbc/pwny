@@ -34,7 +34,7 @@ show_help() {
 Usage: ./pwny.sh [options]
 
 Description:
-  pwny.sh is a modular web scanner for automated testing of common
+  pwny.sh is a modular web vulnerability scanner for automated testing of common
   web vulnerabilities. It supports authentication, subdomain scanning,
   payload-based attacks, and reporting in both CSV and JSON formats.
 
@@ -46,6 +46,7 @@ Options:
   --path-trav      Test for Path Traversal
   --redirect       Test for Open Redirect
   --idor           Test for Insecure Direct Object Reference (IDOR)
+  --csrf           Test for Cross-Site Request Forgery (CSRF)
   --all            Run all available tests
   --verbose        Show detailed output for each payload
   --dry-run        Simulate requests without actually sending them
@@ -57,40 +58,39 @@ Input:
     - https://example.com
     - http://sub.domain.com
 
-  The scheme (http or https) is auto-detected but can be overridden via the SCHEME variable.
+  The protocol (http or https) is auto-detected but can be overridden with the SCHEME environment variable.
 
 Environment Variables:
-  WORDLIST=subs.txt          Wordlist for subdomain brute-forcing
-  CONCURRENCY=20             Number of parallel subdomain scans (default: 20)
-  USE_DNS_PROBE=true         Enable DNS check before subdomain testing
-  COOKIE="SESSIONID=xyz"     Send cookies with requests
-  SCHEME=https               Force protocol (http or https)
-  LOGFILE=scan.log           Path to the log file
-  OUTPUT_JSON=results.json   Output file for JSON results
-  OUTPUT_CSV=results.csv     Output file for CSV results
-  DRY_RUN=true               Enable dry-run mode (no real HTTP requests)
-  VERBOSE=true               Enable detailed output per payload
-  FLAG_TEST_CSRF=true        Enable CSRF testing
-  FLAG_TEST_BLIND_SQLI=true  Enable blind SQL injection test
+  WORDLIST=subdomains.txt       Wordlist for subdomain brute-forcing
+  CONCURRENCY=20                Number of parallel subdomain scans (default: 20)
+  USE_DNS_PROBE=true            Enable DNS resolution check before testing subdomains
+  COOKIE="SESSIONID=xyz"        Session cookie to include with requests
+  SCHEME=http|https             Force HTTP scheme instead of auto-detection
+  LOGFILE=scan.log              Path to log file (default: scan.log)
+  OUTPUT_JSON=results.json      JSON output file (default: results.json)
+  OUTPUT_CSV=results.csv        CSV output file (default: results.csv)
+  DRY_RUN=true                  Enable dry-run mode (no actual HTTP requests)
+  VERBOSE=true                  Enable verbose output per tested payload
+  FLAG_TEST_CSRF=true           Enable CSRF vulnerability testing
+  FLAG_TEST_BLIND_SQLI=true     Enable time-based blind SQL injection test
 
 Examples:
   ./pwny.sh --all
   ./pwny.sh --xss --sqli --verbose
-  COOKIE="session=abc" ./pwny.sh --lfi
-  WORDLIST=subs.txt USE_DNS_PROBE=true ./pwny.sh --all
-  FLAG_TEST_CSRF=true FLAG_TEST_BLIND_SQLI=true ./pwny.sh --sqli
+  COOKIE="session=abc123" ./pwny.sh --lfi
+  WORDLIST=subdomains.txt USE_DNS_PROBE=true ./pwny.sh --all
+  FLAG_TEST_CSRF=true FLAG_TEST_BLIND_SQLI=true ./pwny.sh --csrf --sqli
 
 Notes:
   - Payloads are loaded from ./payloads/*.txt
   - Results are saved to ./results/ directory
-  - Log files are stored in ./logs/
-  - Use this tool **only with explicit permission!**
+  - Logs are saved to ./logs/ directory
+  - Use this tool only with explicit permission; unauthorized use is illegal and unethical.
 
 EOF
 }
 
-
-# Initialisierung der Variablen
+# Initialize flags
 RUN_SQLI=false
 RUN_XSS=false
 RUN_LFI=false
@@ -98,7 +98,15 @@ RUN_CMDI=false
 RUN_PATH_TRAV=false
 RUN_REDIRECT=false
 RUN_IDOR=false
+RUN_CSRF=false
 RUN_ALL=false
+VERBOSE=false
+DRY_RUN=false
+
+# Optional login credentials
+LOGIN_URL=""
+LOGIN_USER=""
+LOGIN_PASS=""
 
 # Parse CLI flags
 while [[ $# -gt 0 ]]; do
@@ -110,17 +118,31 @@ while [[ $# -gt 0 ]]; do
     --path-trav) RUN_PATH_TRAV=true ;;
     --redirect) RUN_REDIRECT=true ;;
     --idor) RUN_IDOR=true ;;
+    --csrf) RUN_CSRF=true ;;
+    --all) RUN_ALL=true ;;
     --verbose) VERBOSE=true ;;
     --dry-run) DRY_RUN=true ;;
-    --all)  RUN_ALL=true;;
-    --help|-h) show_help; exit 0 ;;
-    *) echo "[!] Unknown option: $1"; exit 1 ;;
+    --login-url) LOGIN_URL="$2"; shift ;;
+    --username) LOGIN_USER="$2"; shift ;;
+    --password) LOGIN_PASS="$2"; shift ;;
+    --help|-h)
+      show_help
+      exit 0
+      ;;
+    *)
+      echo "[!] Unknown option: $1"
+      echo
+      show_help
+      exit 1
+      ;;
   esac
   shift
 done
 
-# Wenn kein Test gesetzt wurde, dann RUN_ALL=true setzen
-if ! $RUN_SQLI && ! $RUN_XSS && ! $RUN_LFI && ! $RUN_CMDI && ! $RUN_PATH_TRAV && ! $RUN_REDIRECT && ! $RUN_IDOR && ! $RUN_ALL; then
+# If no specific test selected, default to --all
+if ! $RUN_SQLI && ! $RUN_XSS && ! $RUN_LFI && ! $RUN_CMDI && \
+   ! $RUN_PATH_TRAV && ! $RUN_REDIRECT && ! $RUN_IDOR && \
+   ! $RUN_CSRF && ! $RUN_ALL; then
   RUN_ALL=true
 fi
 
