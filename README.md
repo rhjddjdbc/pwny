@@ -17,7 +17,6 @@
   * Insecure Direct Object References (IDOR)
   * Cross-Site Request Forgery (CSRF)
 * Loads payloads from modular `./payloads/*.txt` files
-* Automatic protocol detection (`http` or `https`)
 * Subdomain bruteforcing with optional DNS probing
 * Dry-run and verbose modes
 * CSV and JSON output
