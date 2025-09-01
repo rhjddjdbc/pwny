@@ -6,20 +6,22 @@
 
 ## Features
 
-- Detects the following vulnerabilities:
-  - SQL Injection (SQLi)
-  - Cross-site Scripting (XSS)
-  - Command Injection
-  - Local File Inclusion (LFI)
-  - Path Traversal
-  - Open Redirect
-  - Insecure Direct Object References (IDOR)
-- Loads payloads from modular `./payloads/*.txt` files
-- Automatic protocol detection (`http` or `https`)
-- Subdomain bruteforcing with optional DNS probing
-- Dry-run and verbose modes
-- CSV and JSON output
-- Minimal dependencies (`curl`, `jq`, `dig` optional)
+* Detects the following vulnerabilities:
+
+  * SQL Injection (SQLi)
+  * Cross-site Scripting (XSS)
+  * Command Injection
+  * Local File Inclusion (LFI)
+  * Path Traversal
+  * Open Redirect
+  * Insecure Direct Object References (IDOR)
+  * Cross-Site Request Forgery (CSRF)
+* Loads payloads from modular `./payloads/*.txt` files
+* Automatic protocol detection (`http` or `https`)
+* Subdomain bruteforcing with optional DNS probing
+* Dry-run and verbose modes
+* CSV and JSON output
+* Minimal dependencies (`curl`, `jq`, `dig` optional)
 
 ---
 
@@ -33,10 +35,10 @@ chmod +x pwny.sh
 
 Ensure the following are installed:
 
-- `bash`
-- `curl`
-- `jq`
-- `dig` (optional, for DNS probing)
+* `bash`
+* `curl`
+* `jq`
+* `dig` (optional, for DNS probing)
 
 ---
 
@@ -48,19 +50,20 @@ Ensure the following are installed:
 
 ### Options
 
-| Option         | Description                     |
-| -------------- | ------------------------------- |
-| `--sqli`       | Test for SQL Injection          |
-| `--xss`        | Test for Cross-site Scripting   |
-| `--lfi`        | Test for Local File Inclusion   |
-| `--cmdi`       | Test for Command Injection      |
-| `--path-trav`  | Test for Path Traversal         |
-| `--redirect`   | Test for Open Redirect          |
-| `--idor`       | Test for IDOR                   |
-| `--all`        | Run all tests                   |
-| `--verbose`    | Enable verbose output           |
-| `--dry-run`    | Simulate requests only          |
-| `--help`, `-h` | Show help                       |
+| Option         | Description                                |
+| -------------- | ------------------------------------------ |
+| `--sqli`       | Test for SQL Injection                     |
+| `--xss`        | Test for Cross-site Scripting              |
+| `--lfi`        | Test for Local File Inclusion              |
+| `--cmdi`       | Test for Command Injection                 |
+| `--path-trav`  | Test for Path Traversal                    |
+| `--redirect`   | Test for Open Redirect                     |
+| `--idor`       | Test for IDOR                              |
+| `--csrf`       | Test for Cross-Site Request Forgery (CSRF) |
+| `--all`        | Run all tests                              |
+| `--verbose`    | Enable verbose output                      |
+| `--dry-run`    | Simulate requests only                     |
+| `--help`, `-h` | Show help                                  |
 
 ---
 
@@ -74,9 +77,9 @@ Enter target domain (e.g. https://example.com or example.com):
 
 Accepted formats:
 
-- `example.com`
-- `https://example.com`
-- `http://sub.example.com`
+* `example.com`
+* `https://example.com`
+* `http://sub.example.com`
 
 The protocol (`http` or `https`) is detected automatically.
 
@@ -88,10 +91,10 @@ The tool can enumerate subdomains by applying words from a wordlist to the targe
 
 ### How it works
 
-- Provide a wordlist of possible subdomain names (e.g. `subdomains.txt`).
-- The script appends those words to the base domain (e.g. `admin.example.com`, `dev.example.com`).
-- If `USE_DNS_PROBE` is set to `true`, the tool checks whether the subdomain actually resolves (DNS lookup).
-- Discovered subdomains are then tested for vulnerabilities.
+* Provide a wordlist of possible subdomain names (e.g. `subdomains.txt`).
+* The script appends those words to the base domain (e.g. `admin.example.com`, `dev.example.com`).
+* If `USE_DNS_PROBE` is set to `true`, the tool checks whether the subdomain actually resolves (DNS lookup).
+* Discovered subdomains are then tested for vulnerabilities.
 
 ### Example
 
@@ -151,7 +154,7 @@ OUTPUT_CSV="output.csv"
 ./pwny.sh --all
 
 # Run only specific tests
-./pwny.sh --xss --sqli
+./pwny.sh --xss --sqli --csrf
 
 # Subdomain bruteforcing with custom wordlist
 WORDLIST=subdomains.txt USE_DNS_PROBE=true ./pwny.sh --all
@@ -164,9 +167,9 @@ COOKIE="session=abc123" ./pwny.sh --lfi --verbose
 
 ## Output
 
-- JSON results: `results.json`
-- CSV results: `results.csv`
-- Log file: `scan.log`
+* JSON results: `results.json`
+* CSV results: `results.csv`
+* Log file: `scan.log`
 
 Each finding includes timestamp, domain, URL, vulnerability type, payload details, and context.
 
