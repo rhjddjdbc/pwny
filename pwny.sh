@@ -23,26 +23,41 @@ if $RUN_ALL; then
   wait $PID
 else
   log "[*] Running selected tests synchronously on: $BASE_URL"
+  
   if $RUN_SQLI; then
     test_sqli "$BASE_URL"
   fi
+  
+  if [[ "$FLAG_TEST_BLIND_SQLI" == true ]]; then
+    test_blind_sqli "$BASE_URL"
+  fi
+
   if $RUN_XSS; then
     test_xss "$BASE_URL"
   fi
+  
   if $RUN_PATH_TRAV; then
     test_path_traversal "$BASE_URL"
   fi
+
   if $RUN_CMDI; then
     test_cmd_injection "$BASE_URL"
   fi
+
   if $RUN_LFI; then
     test_lfi "$BASE_URL"
   fi
+
   if $RUN_REDIRECT; then
     test_redirect "$BASE_URL"
   fi
+
   if $RUN_IDOR; then
     test_idor "$BASE_URL"
+  fi
+
+  if [[ "$FLAG_TEST_CSRF" == true ]]; then
+    test_csrf "$BASE_URL"
   fi
 fi
 
