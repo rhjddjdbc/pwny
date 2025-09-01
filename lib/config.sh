@@ -33,47 +33,58 @@ show_help() {
 
 Usage: ./pwny.sh [options]
 
+Description:
+  pwny.sh is a modular web scanner for automated testing of common
+  web vulnerabilities. It supports authentication, subdomain scanning,
+  payload-based attacks, and reporting in both CSV and JSON formats.
+
 Options:
-  --sqli           Test for SQL injection
-  --xss            Test for Cross-site scripting
-  --lfi            Test for Local File Inclusion
+  --sqli           Test for SQL Injection
+  --xss            Test for Cross-Site Scripting (XSS)
+  --lfi            Test for Local File Inclusion (LFI)
   --cmdi           Test for Command Injection
   --path-trav      Test for Path Traversal
   --redirect       Test for Open Redirect
-  --idor           Test for Insecure Direct Object References
-  --all            Run all vulnerability tests
-  --verbose        Enable verbose output
-  --dry-run        Simulate requests without sending them
+  --idor           Test for Insecure Direct Object Reference (IDOR)
+  --all            Run all available tests
+  --verbose        Show detailed output for each payload
+  --dry-run        Simulate requests without actually sending them
   --help, -h       Show this help message and exit
 
 Input:
-  You'll be prompted to enter a target domain.
-  Accepted formats:
+  You will be prompted to enter a target domain. Supported formats:
     - example.com
     - https://example.com
     - http://sub.domain.com
 
-  The scheme (http or https) will be automatically detected.
+  The scheme (http or https) is auto-detected but can be overridden via the SCHEME variable.
 
 Environment Variables:
-  WORDLIST=filename.txt    Wordlist for subdomain brute-forcing
-  CONCURRENCY=N            Number of parallel subdomain tests (default: 20)
-  USE_DNS_PROBE=true       Enable DNS checking before subdomain scan
-  COOKIE="SESSIONID=abc"   Send cookie with requests
-  LOGFILE=scan.log         Output logfile
-  OUTPUT_JSON=results.json Output JSON results file
-  OUTPUT_CSV=results.csv   Output CSV results file
+  WORDLIST=subs.txt          Wordlist for subdomain brute-forcing
+  CONCURRENCY=20             Number of parallel subdomain scans (default: 20)
+  USE_DNS_PROBE=true         Enable DNS check before subdomain testing
+  COOKIE="SESSIONID=xyz"     Send cookies with requests
+  SCHEME=https               Force protocol (http or https)
+  LOGFILE=scan.log           Path to the log file
+  OUTPUT_JSON=results.json   Output file for JSON results
+  OUTPUT_CSV=results.csv     Output file for CSV results
+  DRY_RUN=true               Enable dry-run mode (no real HTTP requests)
+  VERBOSE=true               Enable detailed output per payload
+  FLAG_TEST_CSRF=true        Enable CSRF testing
+  FLAG_TEST_BLIND_SQLI=true  Enable blind SQL injection test
 
 Examples:
   ./pwny.sh --all
-  ./pwny.sh --xss --sqli
-  WORDLIST=subs.txt ./pwny.sh --all
-  COOKIE="token=xyz" ./pwny.sh --lfi --verbose
+  ./pwny.sh --xss --sqli --verbose
+  COOKIE="session=abc" ./pwny.sh --lfi
+  WORDLIST=subs.txt USE_DNS_PROBE=true ./pwny.sh --all
+  FLAG_TEST_CSRF=true FLAG_TEST_BLIND_SQLI=true ./pwny.sh --sqli
 
 Notes:
-- Results are saved as CSV and JSON.
-- Payloads are loaded from ./payloads/*.txt
-- Designed for authorized testing and research only.
+  - Payloads are loaded from ./payloads/*.txt
+  - Results are saved to ./results/ directory
+  - Log files are stored in ./logs/
+  - Use this tool **only with explicit permission!**
 
 EOF
 }
